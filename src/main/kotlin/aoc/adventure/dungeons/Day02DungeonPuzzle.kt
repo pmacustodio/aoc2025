@@ -91,10 +91,14 @@ class Day02DungeonPuzzle : DungeonPuzzle {
     }
 
     private fun parseRanges(input: List<String>): List<Pair<Long, Long>> {
-        return input.filter { it.isNotBlank() }.map { line ->
-            val parts = line.split("-")
-            parts[0].toLong() to parts[1].toLong()
-        }
+        // Input format: comma-separated ranges on a single line (e.g., "12077-25471,4343258-4520548,...")
+        return input.filter { it.isNotBlank() }
+            .flatMap { line -> line.split(",") }
+            .filter { it.isNotBlank() }
+            .map { range ->
+                val (start, end) = range.trim().split("-").map { it.toLong() }
+                start to end
+            }
     }
 
     private fun countDoubledInRange(start: Long, end: Long): Long {
