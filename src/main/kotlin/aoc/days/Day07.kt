@@ -8,6 +8,10 @@ package aoc.days
  * are emitted from the left and right of the splitter.
  *
  * Part 1: Count how many times the beam is split.
+ *
+ * Part 2: Quantum tachyon manifold - count distinct timelines.
+ * Each splitter creates 2 timelines (left and right path).
+ * Track timeline counts per position, not just positions.
  */
 
 import java.io.File
@@ -33,7 +37,10 @@ fun main() {
         "..............."
     )
     val exampleResult = day07Part1(example)
-    println("Example: $exampleResult (expected 21)")
+    println("Example Part 1: $exampleResult (expected 21)")
+
+    val exampleResult2 = day07Part2(example)
+    println("Example Part 2: $exampleResult2 (expected 40)")
 
     val input = File("src/main/resources/inputs/day07.txt").readLines()
 
@@ -100,8 +107,65 @@ fun day07Part1(input: List<String>): Long {
     return splitCount
 }
 
-@Suppress("UNUSED_PARAMETER")
 fun day07Part2(input: List<String>): Long {
-    // Part 2 not yet revealed
-    return 0
+    val grid = input.filter { it.isNotBlank() }
+    if (grid.isEmpty()) return 0
+
+    val height = grid.size
+    val width = grid.maxOf { it.length }
+
+    // Find the starting position 'S'
+    var startCol = -1
+    for (line in grid) {
+        val col = line.indexOf('S')
+        if (col >= 0) {
+            startCol = col
+            break
+        }
+    }
+
+    if (startCol == -1) return 0
+
+    // Track timeline counts per column position
+    // Key = column, Value = number of timelines at that position
+    var timelines = mutableMapOf(startCol to 1L)
+
+    // Process row by row, starting from the row after S
+    for (row in 1 until height) {
+        val line = grid[row]
+        val newTimelines = mutableMapOf<Int, Long>()
+
+        for ((col, count) in timelines) {
+            val char = if (col < line.length) line[col] else '.'
+
+            when (char) {
+                '^' -> {
+                    // Splitter: each timeline splits into 2 (left and right)
+                    val leftCol = col - 1
+                    val rightCol = col + 1
+                    if (leftCol >= 0) {
+                        newTimelines[leftCol] = (newTimelines[leftCol] ?: 0L) + count
+                    }
+                    if (rightCol < width) {
+                        newTimelines[rightCol] = (newTimelines[rightCol] ?: 0L) + count
+                    }
+                }
+                '.', ' ' -> {
+                    // Empty space: timelines continue downward
+                    newTimelines[col] = (newTimelines[col] ?: 0L) + count
+                }
+                else -> {
+                    newTimelines[col] = (newTimelines[col] ?: 0L) + count
+                }
+            }
+        }
+
+        timelines = newTimelines
+
+        // If no timelines left, stop
+        if (timelines.isEmpty()) break
+    }
+
+    // Sum all timelines across all final positions
+    return timelines.values.sum()
 }
